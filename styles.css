@@ -1,0 +1,42 @@
+/* DeskFlow Helpdesk — styles.css */
+
+/* ── RESET & BASE ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --cream:       #F8F6F1;
+  --cream-dark:  #EDE9E0;
+  --white:       #FFFFFF;
+  --ink:         #1A1916;
+  --ink-2:       #3A3832;
+  --ink-3:       #6B6760;
+  --ink-4:       #9C9994;
+  --accent:      #3D52A0;
+  --accent-2:    #2C3D7A;
+  --accent-light:#E8EBF5;
+  --accent-glow: rgba(61,82,160,0.12);
+  --transition:  0.18s ease;
+  --border:      1px solid rgba(26,25,22,0.09);
+}
+
+html { font-size: 15px; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}

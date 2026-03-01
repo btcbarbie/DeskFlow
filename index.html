@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeskFlow — Helpdesk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <!-- ===== GLOBAL HEADER ===== -->
+    <header class="app-header">
+        <div class="header-brand">
+            <span class="brand-mark">◈</span>
+            <span class="brand-name">DeskFlow</span>
+        </div>
+        <div class="role-toggle" id="roleToggle">
+            <button class="toggle-btn active" data-role="customer" onclick="App.switchRole('customer')">
+                <span class="toggle-icon">☉</span> Customer
+            </button>
+            <button class="toggle-btn" data-role="agent" onclick="App.switchRole('agent')">
+                <span class="toggle-icon">⬡</span> Agent Dashboard
+            </button>
+        </div>
+        <div class="header-meta">
+            <span class="header-version">v1.0</span>
+        </div>
+    </header>
+
+    <!-- Views will go here -->
+
+    <script src="app.js"></script>
+</body>
+
+</html>
