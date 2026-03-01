@@ -304,6 +304,166 @@ const App = (() => {
 
 
 /* ══════════════════════════════════════════
+   DASHBOARD — table, filters, metrics
+══════════════════════════════════════════ */
+const Dashboard = (() => {
+
+    /** Status→badge CSS class mapping */
+    const STATUS_CLASS = {
+        'Open': 'badge-status-open',
+        'In Progress': 'badge-status-progress',
+        'Resolved': 'badge-status-resolved',
+        'Closed': 'badge-status-closed',
+    };
+
+    const PRIORITY_CLASS = {
+        'Urgent': 'badge-priority-urgent',
+        'High': 'badge-priority-high',
+        'Medium': 'badge-priority-medium',
+        'Low': 'badge-priority-low',
+    };
+
+    /** Priority sort order (lower = higher urgency) */
+    const PRIORITY_RANK = { Urgent: 0, High: 1, Medium: 2, Low: 3 };
+
+    /** Build a status badge HTML string */
+    function statusBadge(s) {
+        return `<span class="badge ${STATUS_CLASS[s] || ''}">${Utils.escHtml(s)}</span>`;
+    }
+
+    /** Build a priority badge HTML string */
+    function priorityBadge(p) {
+        return `<span class="badge ${PRIORITY_CLASS[p] || ''}">${Utils.escHtml(p)}</span>`;
+    }
+
+    /** Get filtered + sorted tickets based on current toolbar state */
+    function getFilteredTickets() {
+        const search = document.getElementById('searchInput').value.trim().toLowerCase();
+        const status = document.getElementById('filterStatus').value;
+        const priority = document.getElementById('filterPriority').value;
+        const sort = document.getElementById('sortBy').value;
+
+        let tickets = TicketStore.getAll();
+
+        // Text search across subject and email
+        if (search) {
+            tickets = tickets.filter(t =>
+                t.subject.toLowerCase().includes(search) ||
+                t.email.toLowerCase().includes(search) ||
+                t.name.toLowerCase().includes(search)
+            );
+        }
+
+        // Status filter
+        if (status) tickets = tickets.filter(t => t.status === status);
+
+        // Priority filter
+        if (priority) tickets = tickets.filter(t => t.priority === priority);
+
+        // Sorting
+        tickets.sort((a, b) => {
+            if (sort === 'newest') return new Date(b.createdAt) - new Date(a.createdAt);
+            if (sort === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt);
+            if (sort === 'priority') return PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority];
+            if (sort === 'sla') return new Date(a.slaDeadline) - new Date(b.slaDeadline);
+            return 0;
+        });
+
+        return tickets;
+    }
+
+    /** Render a single table row for a ticket */
+    function renderRow(ticket) {
+        const overdue = Utils.isOverdue(ticket);
+        const slaDate = Utils.formatShortDate(ticket.slaDeadline);
+        const createdDate = Utils.formatShortDate(ticket.createdAt);
+        const agentText = ticket.agent || 'Unassigned';
+        const agentClass = ticket.agent ? '' : ' unassigned';
+
+        return `
+      <tr class="${overdue ? 'overdue' : ''}" onclick="Modal.open('${Utils.escHtml(ticket.id)}')">
+        <td class="ticket-id-cell">${Utils.escHtml(ticket.id)}</td>
+        <td>
+          <div class="customer-cell">
+            <span class="cust-name">${Utils.escHtml(ticket.name)}</span>
+            <span class="cust-email">${Utils.escHtml(ticket.email)}</span>
+          </div>
+        </td>
+        <td class="subject-cell" title="${Utils.escHtml(ticket.subject)}">${Utils.escHtml(ticket.subject)}</td>
+        <td><span class="badge badge-category">${Utils.escHtml(ticket.category)}</span></td>
+        <td>${priorityBadge(ticket.priority)}</td>
+        <td>${statusBadge(ticket.status)}</td>
+        <td class="assigned-cell${agentClass}">${Utils.escHtml(agentText)}</td>
+        <td class="sla-cell ${overdue ? 'overdue-sla' : ''}">
+          <span class="sla-time">${slaDate}</span>
+          ${overdue ? '<span class="overdue-tag">OVERDUE</span>' : ''}
+        </td>
+        <td class="date-cell">${createdDate}</td>
+        <td>
+          <button class="action-btn" onclick="event.stopPropagation(); Modal.open('${Utils.escHtml(ticket.id)}')">Open →</button>
+        </td>
+      </tr>
+    `;
+    }
+
+    /** Render all tickets into the table body */
+    function render() {
+        const tickets = getFilteredTickets();
+        const tbody = document.getElementById('ticketsBody');
+        const empty = document.getElementById('tableEmpty');
+        const countEl = document.getElementById('ticketCount');
+
+        if (tickets.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = '';
+        } else {
+            tbody.innerHTML = tickets.map(renderRow).join('');
+            empty.style.display = 'none';
+        }
+
+        const label = tickets.length === 1 ? '1 ticket' : `${tickets.length} tickets`;
+        countEl.textContent = label;
+
+        updateMetrics();
+    }
+
+    /** Apply current filters and re-render (called from toolbar inputs) */
+    function applyFilters() {
+        render();
+    }
+
+    /** Compute and update all metric cards */
+    function updateMetrics() {
+        const all = TicketStore.getAll();
+
+        const total = all.length;
+        const open = all.filter(t => t.status === 'Open').length;
+        const progress = all.filter(t => t.status === 'In Progress').length;
+        const resolved = all.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
+        const urgent = all.filter(t => t.priority === 'Urgent' || t.priority === 'High').length;
+
+        // Average resolution time: only tickets with resolvedAt
+        const resolvedTickets = all.filter(t => t.resolvedAt);
+        let avgTime = '—';
+        if (resolvedTickets.length > 0) {
+            const totalHours = resolvedTickets.reduce((sum, t) =>
+                sum + Utils.hoursBetween(t.createdAt, t.resolvedAt), 0);
+            avgTime = (totalHours / resolvedTickets.length).toFixed(1) + 'h';
+        }
+
+        document.getElementById('m-total').textContent = total;
+        document.getElementById('m-open').textContent = open;
+        document.getElementById('m-progress').textContent = progress;
+        document.getElementById('m-resolved').textContent = resolved;
+        document.getElementById('m-avgtime').textContent = avgTime;
+        document.getElementById('m-urgent').textContent = urgent;
+    }
+
+    return { render, applyFilters };
+})();
+
+
+/* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
