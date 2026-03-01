@@ -163,3 +163,149 @@ const TicketStore = (() => {
 
     return { getAll, add, update, remove, getById };
 })();
+
+
+/* ══════════════════════════════════════════
+   TOAST — notification utility
+══════════════════════════════════════════ */
+const Toast = (() => {
+    let timer = null;
+    const el = () => document.getElementById('toast');
+
+    function show(msg, type = 'info', duration = 3000) {
+        const t = el();
+        t.textContent = msg;
+        t.className = `toast toast-${type} show`;
+        clearTimeout(timer);
+        timer = setTimeout(() => { t.className = 'toast'; }, duration);
+    }
+
+    return { show };
+})();
+
+
+/* ══════════════════════════════════════════
+   APP — role switching + customer form
+══════════════════════════════════════════ */
+const App = (() => {
+
+    let currentRole = 'customer';
+
+    /** Switch between customer and agent views */
+    function switchRole(role) {
+        currentRole = role;
+
+        // Toggle view visibility
+        document.getElementById('view-customer').style.display = role === 'customer' ? '' : 'none';
+        document.getElementById('view-agent').style.display = role === 'agent' ? '' : 'none';
+
+        // Update toggle button states
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.role === role);
+        });
+
+        // Refresh dashboard when switching to agent
+        if (role === 'agent') {
+            Dashboard.render();
+        }
+    }
+
+    /** Initialize form listeners */
+    function initForm() {
+        const form = document.getElementById('ticketForm');
+        const desc = document.getElementById('ticketDescription');
+        const count = document.getElementById('charCount');
+
+        // Character counter for description
+        desc.addEventListener('input', () => {
+            const len = desc.value.length;
+            count.textContent = `${len} / 1000`;
+            if (len > 1000) {
+                desc.value = desc.value.slice(0, 1000);
+                count.textContent = '1000 / 1000';
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            if (!validateForm()) return;
+            submitTicket();
+        });
+    }
+
+    /** Validate the submission form; returns true if valid */
+    function validateForm() {
+        let valid = true;
+
+        const fields = [
+            { id: 'custName', errId: 'err-custName', msg: 'Please enter your name.' },
+            { id: 'custEmail', errId: 'err-custEmail', msg: 'Please enter a valid email.', fn: v => Utils.isValidEmail(v) },
+            { id: 'ticketSubject', errId: 'err-ticketSubject', msg: 'Please enter a subject.' },
+            { id: 'ticketCategory', errId: 'err-ticketCategory', msg: 'Please select a category.' },
+            { id: 'ticketPriority', errId: 'err-ticketPriority', msg: 'Please select a priority.' },
+            { id: 'ticketDescription', errId: 'err-ticketDescription', msg: 'Please describe your issue.' },
+        ];
+
+        fields.forEach(({ id, errId, msg, fn }) => {
+            const el = document.getElementById(id);
+            const err = document.getElementById(errId);
+            const val = el.value.trim();
+            const ok = fn ? fn(val) : val.length > 0;
+
+            if (!ok) {
+                el.classList.add('invalid');
+                err.textContent = msg;
+                valid = false;
+            } else {
+                el.classList.remove('invalid');
+                err.textContent = '';
+            }
+        });
+
+        return valid;
+    }
+
+    /** Collect form data and persist ticket */
+    function submitTicket() {
+        const ticket = TicketStore.add({
+            name: document.getElementById('custName').value,
+            email: document.getElementById('custEmail').value,
+            subject: document.getElementById('ticketSubject').value,
+            description: document.getElementById('ticketDescription').value,
+            category: document.getElementById('ticketCategory').value,
+            priority: document.getElementById('ticketPriority').value,
+        });
+
+        // Show success state
+        document.getElementById('ticketFormCard').style.display = 'none';
+        const sc = document.getElementById('successCard');
+        sc.style.display = '';
+        document.getElementById('successTicketId').textContent = ticket.id;
+        Toast.show('Ticket submitted successfully!', 'success');
+    }
+
+    /** Reset form back to initial state */
+    function resetForm() {
+        document.getElementById('ticketForm').reset();
+        document.getElementById('charCount').textContent = '0 / 1000';
+        document.querySelectorAll('.field-error').forEach(e => e.textContent = '');
+        document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+        document.getElementById('successCard').style.display = 'none';
+        document.getElementById('ticketFormCard').style.display = '';
+    }
+
+    function init() {
+        initForm();
+    }
+
+    return { switchRole, resetForm, init };
+})();
+
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
+});
