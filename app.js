@@ -464,6 +464,125 @@ const Dashboard = (() => {
 
 
 /* ══════════════════════════════════════════
+   MODAL — ticket detail view & edits
+══════════════════════════════════════════ */
+const Modal = (() => {
+    let currentId = null; // currently open ticket ID
+
+    /** Open the modal for the given ticket ID */
+    function open(id) {
+        const ticket = TicketStore.getById(id);
+        if (!ticket) return;
+
+        currentId = id;
+        const overlay = document.getElementById('ticketModal');
+
+        // Populate read-only info
+        document.getElementById('modalTicketId').textContent = ticket.id;
+        document.getElementById('modalSubject').textContent = ticket.subject;
+        document.getElementById('mCustName').textContent = ticket.name;
+        document.getElementById('mCustEmail').textContent = ticket.email;
+        document.getElementById('mCategory').textContent = ticket.category;
+        document.getElementById('mCreated').textContent = Utils.formatDate(ticket.createdAt);
+        document.getElementById('mDescription').textContent = ticket.description;
+
+        // SLA with overdue indicator
+        const slaEl = document.getElementById('mSLA');
+        const overdue = Utils.isOverdue(ticket);
+        slaEl.textContent = Utils.formatDate(ticket.slaDeadline);
+        slaEl.style.color = overdue ? 'var(--urgent)' : '';
+        slaEl.style.fontWeight = overdue ? '600' : '';
+
+        // Populate editable controls
+        document.getElementById('mStatus').value = ticket.status;
+        document.getElementById('mPriority').value = ticket.priority;
+        document.getElementById('mAgent').value = ticket.agent || '';
+        document.getElementById('mNotes').value = ticket.notes || '';
+        document.getElementById('mResolution').value = ticket.resolution || '';
+
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    /** Close the modal */
+    function close() {
+        document.getElementById('ticketModal').style.display = 'none';
+        document.body.style.overflow = '';
+        currentId = null;
+
+        // Refresh dashboard after any edits
+        Dashboard.render();
+    }
+
+    /** Handle clicking on the overlay background to dismiss */
+    function handleOverlayClick(e) {
+        if (e.target === document.getElementById('ticketModal')) {
+            close();
+        }
+    }
+
+    /**
+     * Update a single field on the current ticket
+     * Called by onchange/oninput listeners in the modal
+     */
+    function updateField(field, value) {
+        if (!currentId) return;
+
+        const fieldMap = {
+            status: 'status',
+            priority: 'priority',
+            agent: 'agent',
+            notes: 'notes',
+            resolution: 'resolution',
+        };
+
+        const key = fieldMap[field];
+        if (!key) return;
+
+        TicketStore.update(currentId, { [key]: value });
+
+        // If status changed to Resolved/Closed, refresh the SLA display
+        if (field === 'status') {
+            const ticket = TicketStore.getById(currentId);
+            if (ticket) {
+                const slaEl = document.getElementById('mSLA');
+                const overdue = Utils.isOverdue(ticket);
+                slaEl.style.color = overdue ? 'var(--urgent)' : '';
+            }
+            Toast.show(`Status updated to "${value}"`, 'info', 2000);
+        }
+
+        // If priority changed, SLA recalculated – update display
+        if (field === 'priority') {
+            const ticket = TicketStore.getById(currentId);
+            if (ticket) {
+                document.getElementById('mSLA').textContent = Utils.formatDate(ticket.slaDeadline);
+            }
+            Toast.show(`Priority updated to "${value}"`, 'info', 2000);
+        }
+    }
+
+    /** Delete the current ticket after confirmation */
+    function deleteTicket() {
+        if (!currentId) return;
+        if (!confirm('Are you sure you want to permanently delete this ticket? This cannot be undone.')) return;
+        TicketStore.remove(currentId);
+        Toast.show('Ticket deleted.', 'error', 3000);
+        close();
+    }
+
+    // Keyboard escape to close
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('ticketModal').style.display !== 'none') {
+            close();
+        }
+    });
+
+    return { open, close, handleOverlayClick, updateField, deleteTicket };
+})();
+
+
+/* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
