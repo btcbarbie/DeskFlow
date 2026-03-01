@@ -583,8 +583,73 @@ const Modal = (() => {
 
 
 /* ══════════════════════════════════════════
+   SEED DATA — insert sample tickets on first load
+══════════════════════════════════════════ */
+function seedSampleData() {
+    // Only seed if no tickets exist yet
+    if (TicketStore.getAll().length > 0) return;
+
+    const samples = [
+        {
+            name: 'Aria Chen', email: 'aria@acme.io',
+            subject: 'Dashboard charts not loading after latest update',
+            description: 'Since the v2.4 update rolled out this morning, none of the analytics charts on our dashboard are rendering. The page loads, but the chart containers remain blank. Browser console shows a 500 error from /api/analytics/chart-data. This is blocking our morning standup reports.',
+            category: 'Bug', priority: 'Urgent',
+        },
+        {
+            name: 'Marcus Webb', email: 'marcus@fintech.co',
+            subject: 'Request: CSV export for transactions',
+            description: 'We need the ability to export transaction records to CSV. Currently we have to manually copy data from the table. An export button on the transactions page would save us significant time every month for our accounting team.',
+            category: 'Feature', priority: 'Medium',
+        },
+        {
+            name: 'Priya Sharma', email: 'priya@startup.dev',
+            subject: 'Invoice #1042 charged twice this month',
+            description: 'Our credit card was billed $299 twice on the same day (2024-11-01). Our subscription plan only shows one active subscription. Please investigate and refund the duplicate charge as soon as possible.',
+            category: 'Billing', priority: 'High',
+        },
+        {
+            name: 'Sam Torres', email: 'sam.torres@company.org',
+            subject: 'How do I reset 2FA for a team member?',
+            description: 'One of our developers lost access to their authenticator app and can no longer log in. What is the process for an admin to reset 2FA for a specific user account? I couldn\'t find this in the docs.',
+            category: 'General', priority: 'Low',
+        },
+        {
+            name: 'Lena Kovacs', email: 'lena@design.agency',
+            subject: 'API rate limit errors on bulk import endpoint',
+            description: 'When running our nightly import jobs via the /api/v1/import endpoint, we are receiving 429 Too Many Requests errors after approximately 200 records. We need higher rate limits or a bulk upload endpoint. Our current plan is Professional.',
+            category: 'Bug', priority: 'High',
+        },
+    ];
+
+    // Use past timestamps to make the sample data look realistic
+    samples.forEach((data, i) => {
+        const ticket = TicketStore.add(data);
+        // Backdate created timestamps for visual variety
+        const backdate = new Date();
+        backdate.setHours(backdate.getHours() - (i + 1) * 18);
+        const stored = TicketStore.getAll().find(t => t.id === ticket.id);
+        if (stored) {
+            const backdated = backdate.toISOString();
+            TicketStore.update(ticket.id, {
+                createdAt: backdated,
+                slaDeadline: Utils.calcSLADeadline(backdated, stored.priority),
+            });
+        }
+    });
+
+    // Mark one ticket as In Progress
+    const tickets = TicketStore.getAll();
+    if (tickets[1]) TicketStore.update(tickets[1].id, { status: 'In Progress', agent: 'Agent B' });
+    if (tickets[3]) TicketStore.update(tickets[3].id, { status: 'Resolved', agent: 'Agent A', resolvedAt: new Date().toISOString(), resolution: 'Provided documentation link and walked through admin settings.' });
+}
+
+
+/* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
+    seedSampleData();
     App.init();
+    // Default view is customer — agent renders on demand
 });
