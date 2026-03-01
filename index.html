@@ -133,6 +133,232 @@
         </div>
     </main>
 
+    <!-- ===== AGENT DASHBOARD VIEW ===== -->
+    <main id="view-agent" class="view" style="display:none;">
+
+        <!-- Metrics Bar -->
+        <section class="metrics-section">
+            <div class="metrics-grid">
+                <div class="metric-card" data-metric="total">
+                    <div class="metric-label">Total Tickets</div>
+                    <div class="metric-value" id="m-total">0</div>
+                    <div class="metric-sub">All time</div>
+                </div>
+                <div class="metric-card accent-open" data-metric="open">
+                    <div class="metric-label">Open</div>
+                    <div class="metric-value" id="m-open">0</div>
+                    <div class="metric-sub">Awaiting response</div>
+                </div>
+                <div class="metric-card accent-progress" data-metric="progress">
+                    <div class="metric-label">In Progress</div>
+                    <div class="metric-value" id="m-progress">0</div>
+                    <div class="metric-sub">Being worked on</div>
+                </div>
+                <div class="metric-card accent-resolved" data-metric="resolved">
+                    <div class="metric-label">Resolved</div>
+                    <div class="metric-value" id="m-resolved">0</div>
+                    <div class="metric-sub">Successfully closed</div>
+                </div>
+                <div class="metric-card accent-time" data-metric="avgtime">
+                    <div class="metric-label">Avg Resolution</div>
+                    <div class="metric-value" id="m-avgtime">—</div>
+                    <div class="metric-sub">Hours</div>
+                </div>
+                <div class="metric-card accent-urgent" data-metric="urgent">
+                    <div class="metric-label">Urgent Tickets</div>
+                    <div class="metric-value" id="m-urgent">0</div>
+                    <div class="metric-sub">High priority</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toolbar -->
+        <section class="toolbar-section">
+            <div class="toolbar">
+                <div class="toolbar-search">
+                    <span class="search-icon">⌕</span>
+                    <input type="text" id="searchInput" placeholder="Search by subject or email…"
+                        oninput="Dashboard.applyFilters()" />
+                </div>
+                <div class="toolbar-filters">
+                    <div class="select-wrapper sm">
+                        <select id="filterStatus" onchange="Dashboard.applyFilters()">
+                            <option value="">All Statuses</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="select-wrapper sm">
+                        <select id="filterPriority" onchange="Dashboard.applyFilters()">
+                            <option value="">All Priorities</option>
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
+                    </div>
+                    <div class="select-wrapper sm">
+                        <select id="sortBy" onchange="Dashboard.applyFilters()">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="priority">Priority</option>
+                            <option value="sla">SLA Deadline</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="toolbar-count">
+                    <span id="ticketCount">0 tickets</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tickets Table -->
+        <section class="table-section">
+            <div class="table-wrapper" id="tableWrapper">
+                <table class="tickets-table" id="ticketsTable">
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Customer</th>
+                            <th>Subject</th>
+                            <th>Category</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned</th>
+                            <th>SLA Deadline</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ticketsBody">
+                        <!-- Rows injected by JS -->
+                    </tbody>
+                </table>
+                <div class="table-empty" id="tableEmpty" style="display:none;">
+                    <div class="empty-icon">◎</div>
+                    <p>No tickets found matching your filters.</p>
+                    <span>Try adjusting the search or filter criteria.</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== TICKET DETAIL MODAL ===== -->
+    <div class="modal-overlay" id="ticketModal" style="display:none;" onclick="Modal.handleOverlayClick(event)">
+        <div class="modal-panel" id="modalPanel">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <span class="modal-ticket-id" id="modalTicketId"></span>
+                    <h2 class="modal-title" id="modalSubject"></h2>
+                </div>
+                <button class="modal-close" onclick="Modal.close()">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-cols">
+                    <!-- Left column: ticket info -->
+                    <div class="modal-info">
+                        <div class="info-section">
+                            <h3>Ticket Details</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Customer</span>
+                                    <span class="info-value" id="mCustName"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value" id="mCustEmail"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Category</span>
+                                    <span class="info-value" id="mCategory"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Created</span>
+                                    <span class="info-value" id="mCreated"></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">SLA Deadline</span>
+                                    <span class="info-value" id="mSLA"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-section">
+                            <h3>Description</h3>
+                            <p class="description-text" id="mDescription"></p>
+                        </div>
+                    </div>
+
+                    <!-- Right column: controls -->
+                    <div class="modal-controls">
+                        <div class="control-section">
+                            <h3>Manage Ticket</h3>
+
+                            <div class="form-group">
+                                <label>Status</label>
+                                <div class="select-wrapper">
+                                    <select id="mStatus" onchange="Modal.updateField('status', this.value)">
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <div class="select-wrapper">
+                                    <select id="mPriority" onchange="Modal.updateField('priority', this.value)">
+                                        <option value="Low">Low</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="High">High</option>
+                                        <option value="Urgent">Urgent</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Assigned Agent</label>
+                                <div class="select-wrapper">
+                                    <select id="mAgent" onchange="Modal.updateField('agent', this.value)">
+                                        <option value="">Unassigned</option>
+                                        <option value="Agent A">Agent A</option>
+                                        <option value="Agent B">Agent B</option>
+                                        <option value="Agent C">Agent C</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-section">
+                            <h3>Internal Notes <span class="badge-agent">Agent Only</span></h3>
+                            <textarea id="mNotes" rows="4" placeholder="Add internal notes visible only to agents…"
+                                oninput="Modal.updateField('notes', this.value)"></textarea>
+                        </div>
+
+                        <div class="control-section">
+                            <h3>Resolution Notes</h3>
+                            <textarea id="mResolution" rows="4" placeholder="Describe how the issue was resolved…"
+                                oninput="Modal.updateField('resolution', this.value)"></textarea>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button class="btn btn-danger-outline" onclick="Modal.deleteTicket()">Delete Ticket</button>
+                            <button class="btn btn-primary" onclick="Modal.close()">Save & Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
     <script src="app.js"></script>
 </body>
 
