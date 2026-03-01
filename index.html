@@ -34,7 +34,104 @@
         </div>
     </header>
 
-    <!-- Views will go here -->
+    <!-- ===== CUSTOMER VIEW ===== -->
+    <main id="view-customer" class="view active">
+        <div class="customer-hero">
+            <div class="hero-content">
+                <div class="hero-eyebrow">Support Portal</div>
+                <h1 class="hero-title">How can we help you today?</h1>
+                <p class="hero-subtitle">Submit a ticket and our team will get back to you promptly.</p>
+            </div>
+            <div class="hero-decoration">
+                <div class="deco-circle c1"></div>
+                <div class="deco-circle c2"></div>
+                <div class="deco-circle c3"></div>
+            </div>
+        </div>
+
+        <div class="customer-body">
+            <div class="form-card" id="ticketFormCard">
+                <div class="form-card-header">
+                    <h2>Submit a Support Ticket</h2>
+                    <p>Fill in the details below and we'll respond within our SLA window.</p>
+                </div>
+
+                <form id="ticketForm" novalidate>
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="custName">Full Name <span class="required">*</span></label>
+                            <input type="text" id="custName" placeholder="Jane Smith" autocomplete="name" />
+                            <span class="field-error" id="err-custName"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="custEmail">Email Address <span class="required">*</span></label>
+                            <input type="email" id="custEmail" placeholder="jane@company.com" autocomplete="email" />
+                            <span class="field-error" id="err-custEmail"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ticketSubject">Subject <span class="required">*</span></label>
+                        <input type="text" id="ticketSubject" placeholder="Brief summary of your issue" />
+                        <span class="field-error" id="err-ticketSubject"></span>
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="ticketCategory">Category <span class="required">*</span></label>
+                            <div class="select-wrapper">
+                                <select id="ticketCategory">
+                                    <option value="">Select category...</option>
+                                    <option value="Bug">🐛 Bug Report</option>
+                                    <option value="Feature">✨ Feature Request</option>
+                                    <option value="Billing">💳 Billing</option>
+                                    <option value="General">💬 General Inquiry</option>
+                                </select>
+                            </div>
+                            <span class="field-error" id="err-ticketCategory"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="ticketPriority">Priority <span class="required">*</span></label>
+                            <div class="select-wrapper">
+                                <select id="ticketPriority">
+                                    <option value="">Select priority...</option>
+                                    <option value="Low">🟢 Low</option>
+                                    <option value="Medium">🟡 Medium</option>
+                                    <option value="High">🟠 High</option>
+                                    <option value="Urgent">🔴 Urgent</option>
+                                </select>
+                            </div>
+                            <span class="field-error" id="err-ticketPriority"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ticketDescription">Description <span class="required">*</span></label>
+                        <textarea id="ticketDescription" rows="5"
+                            placeholder="Describe your issue in detail. Include steps to reproduce if applicable..."></textarea>
+                        <span class="field-error" id="err-ticketDescription"></span>
+                        <span class="char-count" id="charCount">0 / 1000</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span class="btn-text">Submit Ticket</span>
+                            <span class="btn-arrow">→</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success Confirmation -->
+            <div class="success-card" id="successCard" style="display:none;">
+                <div class="success-icon">✓</div>
+                <h2>Ticket Submitted!</h2>
+                <p>Your ticket has been received. Our team will respond within the SLA window.</p>
+                <div class="success-ticket-id" id="successTicketId"></div>
+                <button class="btn btn-outline" onclick="App.resetForm()">Submit Another Ticket</button>
+            </div>
+        </div>
+    </main>
 
     <script src="app.js"></script>
 </body>
